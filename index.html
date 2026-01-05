@@ -21,12 +21,8 @@
     </style>
 
     <script>
-      // منع انهيار التطبيق في البيئة الحية
-      window.process = {
-        env: {
-          API_KEY: ""
-        }
-      };
+      // تعريف process لمنع الخطأ في المتصفح قبل تحميل Vite
+      window.process = { env: { API_KEY: "" } };
     </script>
   <script type="importmap">
 {
@@ -44,8 +40,7 @@
 </head>
   <body>
     <div id="root"></div>
-    <!-- المسار بدون سلاش في البداية لضمان التوافق مع Vite و GitHub Pages -->
-    <script type="module" src="index.tsx"></script>
-  <script type="module" src="/index.tsx"></script>
-</body>
+    <!-- ملاحظة: السلاش المائل / مهم جداً لـ Vite ليعرف أن الملف في الجذر -->
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>
