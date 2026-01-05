@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
   <head>
@@ -14,14 +13,15 @@
         font-family: 'Cairo', sans-serif;
         background-color: #f8fafc;
         -webkit-tap-highlight-color: transparent;
+        margin: 0;
       }
-      .scrollbar-hide::-webkit-scrollbar {
-        display: none;
+      #root {
+        min-height: 100vh;
       }
     </style>
 
     <script>
-      // منع انهيار التطبيق في البيئة الحية
+      // تعريف بيئة وهمية لمنع الأخطاء البرمجية في المتصفح
       window.process = {
         env: {
           API_KEY: ""
@@ -44,8 +44,7 @@
 </head>
   <body>
     <div id="root"></div>
-    <!-- استخدام مسار نسبي لضمان عمل Vite بشكل صحيح -->
-    <script type="module" src="index.tsx"></script>
-  <script type="module" src="/index.tsx"></script>
-</body>
+    <!-- السلاش / قبل index.tsx ضروري جداً لـ Vite -->
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>
