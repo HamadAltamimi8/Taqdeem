@@ -1,11 +1,10 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import App from './App.tsx';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // إصلاح المسار ليعمل على مجلدات GitHub Pages الفرعية
     const swPath = window.location.pathname.endsWith('/') 
       ? 'sw.js' 
       : './sw.js';
