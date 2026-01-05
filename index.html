@@ -21,8 +21,12 @@
     </style>
 
     <script>
-      // تعريف process لمنع الخطأ في المتصفح قبل تحميل Vite
-      window.process = { env: { API_KEY: "" } };
+      // منع انهيار التطبيق في البيئة الحية
+      window.process = {
+        env: {
+          API_KEY: ""
+        }
+      };
     </script>
   <script type="importmap">
 {
@@ -40,7 +44,8 @@
 </head>
   <body>
     <div id="root"></div>
-    <!-- ملاحظة: السلاش المائل / مهم جداً لـ Vite ليعرف أن الملف في الجذر -->
-    <script type="module" src="/index.tsx"></script>
-  </body>
+    <!-- استخدام مسار نسبي لضمان عمل Vite بشكل صحيح -->
+    <script type="module" src="index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
+</body>
 </html>
