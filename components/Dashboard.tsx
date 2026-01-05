@@ -15,6 +15,7 @@ const Dashboard: React.FC<DashboardProps> = ({ profile, completion, missingItems
   const userName = profile.personalInfo.fullName.split(' ')[0] || 'باحث عن عمل';
   const [showMissingModal, setShowMissingModal] = useState(false);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const credits = profile.activity?.credits ?? 0;
 
   useEffect(() => {
@@ -30,6 +31,23 @@ const Dashboard: React.FC<DashboardProps> = ({ profile, completion, missingItems
       }
     }
   }, []);
+
+  const handleManualUpdate = () => {
+    setIsCheckingUpdate(true);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg) {
+          reg.update();
+          setTimeout(() => {
+            setIsCheckingUpdate(false);
+            alert("تم التحقق! إذا وجد تحديث جديد سيظهر لك تنبيه التحديث آلياً.");
+          }, 1500);
+        } else {
+          window.location.reload();
+        }
+      });
+    }
+  };
 
   const stats = [
     { label: 'مقابلات مجراة', value: profile.activity?.interviews?.length || 0, color: 'bg-green-500' },
@@ -127,11 +145,17 @@ const Dashboard: React.FC<DashboardProps> = ({ profile, completion, missingItems
         </div>
       </section>
 
-      {/* رقم الإصدار للتأكد من التحديث */}
-      <div className="pt-4 text-center">
+      <div className="pt-4 text-center flex flex-col items-center space-y-3">
         <span className="text-[10px] font-black text-slate-300 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-tighter">
-          نسخة المختبرين v1.1.0-beta
+          نسخة v1.3.3-production
         </span>
+        <button 
+          onClick={handleManualUpdate}
+          className="text-[9px] font-black text-blue-500 hover:text-blue-700 flex items-center space-x-1 space-x-reverse opacity-60"
+        >
+          <svg className={`w-3 h-3 ${isCheckingUpdate ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span>{isCheckingUpdate ? 'جاري الفحص...' : 'التحقق من وجود تحديثات'}</span>
+        </button>
       </div>
 
       {showInstallGuide && <InstallGuide onClose={() => setShowInstallGuide(false)} />}

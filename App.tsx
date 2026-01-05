@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AppStep, UserProfile, UserAccount } from './types';
 import { INITIAL_PROFILE } from './constants';
 import { dbService } from './services/db';
@@ -33,6 +33,56 @@ const App: React.FC = () => {
       }
     }
   }, []);
+
+  // حساب نسبة الاكتمال والنواقص تلقائياً
+  const profileStatus = useMemo(() => {
+    let score = 0;
+    const missing = [];
+
+    // 1. البيانات الشخصية (25%)
+    let personalScore = 0;
+    if (profile.personalInfo.fullName) personalScore += 10;
+    else missing.push("الاسم الكامل");
+    
+    if (profile.personalInfo.phone) personalScore += 10;
+    else missing.push("رقم الجوال");
+    
+    if (profile.personalInfo.city) personalScore += 5;
+    else missing.push("مدينة الإقامة");
+    
+    score += personalScore;
+
+    // 2. التعليم (25%)
+    if (profile.education.length > 0 && profile.education[0].major) {
+      score += 25;
+    } else {
+      missing.push("المؤهل التعليمي والتخصص");
+    }
+
+    // 3. الخبرة (20%)
+    if (profile.experience.hasExperience) {
+      if (profile.experience.list.length > 0) score += 20;
+      else missing.push("تفاصيل الخبرات العملية");
+    } else {
+      score += 20; // تعتبر مكتملة إذا حدد أنه لا يملك خبرة
+    }
+
+    // 4. المهارات (15%)
+    if (profile.skills.technical.length >= 3) {
+      score += 15;
+    } else {
+      missing.push("أضف 3 مهارات على الأقل");
+    }
+
+    // 5. الاهتمامات (15%)
+    if (profile.jobInterests.titles.length > 0) {
+      score += 15;
+    } else {
+      missing.push("تحديد المسميات الوظيفية المستهدفة");
+    }
+
+    return { percentage: score, missing };
+  }, [profile]);
 
   const handleAuth = async () => {
     if (!authForm.email || !authForm.password) {
@@ -143,7 +193,14 @@ const App: React.FC = () => {
       case AppStep.ONBOARDING:
         return <Onboarding onComplete={(data) => { syncProfile(data); setStep(AppStep.DASHBOARD); }} />;
       case AppStep.DASHBOARD:
-        return <Dashboard profile={profile} completion={80} missingItems={[]} onNavigate={setStep} />;
+        return (
+          <Dashboard 
+            profile={profile} 
+            completion={profileStatus.percentage} 
+            missingItems={profileStatus.missing} 
+            onNavigate={setStep} 
+          />
+        );
       case AppStep.ADMIN_PANEL:
         return <AdminDashboard onBack={handleLogout} />;
       case AppStep.INTERVIEW:

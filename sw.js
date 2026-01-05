@@ -1,8 +1,8 @@
 
-const CACHE_NAME = 'taqdeem-v1.2'; // زيادة الرقم هنا يضمن تفعيل التحديث
+const CACHE_NAME = 'taqdeem-v1.3.3';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
+  './',
+  './index.html',
   'https://cdn-icons-png.flaticon.com/512/3850/3850285.png'
 ];
 

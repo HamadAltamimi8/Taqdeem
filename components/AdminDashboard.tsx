@@ -50,7 +50,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
 
     const rows = users.map(user => {
       const p = user.profile;
-      const edu = p.education[0] || {};
+      // Fixed: Improved safely accessing education entry to prevent TypeScript errors
+      const edu = p.education && p.education.length > 0 ? p.education[0] : null;
       const experiences = p.experience.list.map(ex => ex.lastTitle).join(" - ");
       const certs = p.certifications.list.map(c => c.name).join(" - ");
       const interests = p.jobInterests.titles.join(" - ");
@@ -62,10 +63,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
         `'${p.personalInfo.phone || ""}`, // إضافة علامة ' لمنع Excel من تغيير تنسيق الرقم
         p.personalInfo.birthDate || "",
         p.personalInfo.gender || "",
-        edu.degree || "",
-        edu.major || "",
-        edu.university || "",
-        edu.degree || "",
+        // Fixed: Used optional chaining to safely access education fields and avoid TS errors on edu object
+        edu?.degree || "",
+        edu?.major || "",
+        edu?.university || "",
+        edu?.degree || "",
         experiences || "لا يوجد",
         p.experience.years || "0",
         interests || "غير محدد",

@@ -16,9 +16,11 @@ interface Job {
 interface JobListProps {
   profile: UserProfile;
   onBack: () => void;
+  // Added updateProfile to props to allow syncing state with parent
+  updateProfile: (p: UserProfile) => void;
 }
 
-const JobList: React.FC<JobListProps> = ({ profile, onBack }) => {
+const JobList: React.FC<JobListProps> = ({ profile, onBack, updateProfile }) => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activePlatform, setActivePlatform] = useState('الكل');
@@ -64,11 +66,8 @@ const JobList: React.FC<JobListProps> = ({ profile, onBack }) => {
         }
       };
       
-      const savedUser = JSON.parse(localStorage.getItem('taqdeem_session') || '{}');
-      if (savedUser.id) {
-        await dbService.updateProfile(savedUser.id, updatedProfile);
-        localStorage.setItem('taqdeem_session', JSON.stringify({ ...savedUser, profile: updatedProfile }));
-      }
+      // Fixed: Use updateProfile prop instead of manual logic to ensure state is synced correctly
+      updateProfile(updatedProfile);
       
       setAutomationStep(3);
     } catch (e) {
