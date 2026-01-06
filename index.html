@@ -12,21 +12,21 @@
       body {
         font-family: 'Cairo', sans-serif;
         background-color: #f8fafc;
-        -webkit-tap-highlight-color: transparent;
         margin: 0;
+        padding: 0;
+        overflow-x: hidden;
       }
       #root {
         min-height: 100vh;
+        display: flex;
+        flex-direction: column;
       }
     </style>
 
     <script>
-      // تعريف بيئة وهمية لمنع الأخطاء البرمجية في المتصفح
-      window.process = {
-        env: {
-          API_KEY: ""
-        }
-      };
+      // تأمين الكود ضد أخطاء المتصفح في البيئة المجمعة
+      window.process = { env: { NODE_ENV: 'production', API_KEY: '' } };
+      window.global = window;
     </script>
   <script type="importmap">
 {
@@ -44,7 +44,8 @@
 </head>
   <body>
     <div id="root"></div>
-    <!-- السلاش / قبل index.tsx ضروري جداً لـ Vite -->
-    <script type="module" src="/index.tsx"></script>
-  </body>
+    <!-- ملاحظة: تمت إزالة السلاش قبل index.tsx ليعمل المسار بشكل نسبي صحيح -->
+    <script type="module" src="index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
+</body>
 </html>
