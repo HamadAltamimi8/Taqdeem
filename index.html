@@ -24,8 +24,8 @@
     </style>
 
     <script>
-      // تأمين الكود ضد أخطاء المتصفح في البيئة المجمعة
-      window.process = { env: { NODE_ENV: 'production', API_KEY: '' } };
+      // تعريف بيئة التشغيل لمنع أخطاء المكتبات التي تبحث عن process
+      window.process = { env: { NODE_ENV: 'production' } };
       window.global = window;
     </script>
   <script type="importmap">
@@ -44,8 +44,8 @@
 </head>
   <body>
     <div id="root"></div>
-    <!-- ملاحظة: تمت إزالة السلاش قبل index.tsx ليعمل المسار بشكل نسبي صحيح -->
-    <script type="module" src="index.tsx"></script>
+    <!-- استخدام مسار نسبي لضمان التحميل الصحيح في GitHub Pages -->
+    <script type="module" src="./index.tsx"></script>
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>

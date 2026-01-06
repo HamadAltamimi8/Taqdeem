@@ -2,13 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
+// تسجيل الـ Service Worker بشكل أبسط لتجنب أخطاء المسارات
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    const swPath = window.location.pathname.endsWith('/') 
-      ? 'sw.js' 
-      : './sw.js';
-      
-    navigator.serviceWorker.register(swPath).catch(err => console.error('SW failed:', err));
+    navigator.serviceWorker.register('./sw.js')
+      .catch(err => console.log('ServiceWorker registration skipped or failed:', err));
   });
 }
 
