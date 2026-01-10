@@ -22,10 +22,7 @@ export interface ExperienceEntry {
   company: string;
   periodFrom: string;
   periodTo: string;
-<<<<<<< HEAD
   isCurrent: boolean;
-=======
->>>>>>> 2042397f0cf318a231e2c40e259621aef3b801af
   tasks: string;
 }
 
@@ -37,20 +34,13 @@ export interface EducationEntry {
   gradYear: string;
   documentAttached: boolean;
   documentUrl?: string;
-<<<<<<< HEAD
   documentName?: string;
-=======
->>>>>>> 2042397f0cf318a231e2c40e259621aef3b801af
 }
 
 export interface UserActivity {
   appliedJobs: { title: string; company: string; date: string }[];
   interviews: { jobTitle: string; fluency: number; date: string }[];
-<<<<<<< HEAD
   credits: number;
-=======
-  credits: number; // الرصيد الحالي للمستخدم
->>>>>>> 2042397f0cf318a231e2c40e259621aef3b801af
 }
 
 export interface UserProfile {

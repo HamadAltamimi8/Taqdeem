@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
   <head>
@@ -24,7 +25,6 @@
     </style>
 
     <script>
-      // تعريف بيئة التشغيل لمنع أخطاء المكتبات التي تبحث عن process
       window.process = { env: { NODE_ENV: 'production' } };
       window.global = window;
     </script>
@@ -44,8 +44,7 @@
 </head>
   <body>
     <div id="root"></div>
-    <!-- استخدام مسار نسبي لضمان التحميل الصحيح في GitHub Pages -->
-    <script type="module" src="./index.tsx"></script>
-  <script type="module" src="/index.tsx"></script>
-</body>
+    <!-- استخدام المسار المباشر لـ Vite لضمان المعالجة الصحيحة -->
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>

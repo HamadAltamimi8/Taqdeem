@@ -37,16 +37,11 @@ const App: React.FC = () => {
   const profileStatus = useMemo(() => {
     let score = 0;
     const missing = [];
-    if (profile.personalInfo.fullName) score += 10; else missing.push("الاسم الكامل");
-    if (profile.personalInfo.phone) score += 10; else missing.push("رقم الجوال");
-    if (profile.personalInfo.city) score += 5; else missing.push("مدينة الإقامة");
-    if (profile.education.length > 0 && profile.education[0].major) score += 25; else missing.push("المؤهل التعليمي والتخصص");
-    if (profile.experience.hasExperience) {
-      if (profile.experience.list.length > 0) score += 20; else missing.push("تفاصيل الخبرات العملية");
-    } else score += 20;
-    if (profile.skills.technical.length >= 3) score += 15; else missing.push("أضف 3 مهارات على الأقل");
-    if (profile.jobInterests.titles.length > 0) score += 15; else missing.push("تحديد المسميات الوظيفية المستهدفة");
-    return { percentage: score, missing };
+    if (profile.personalInfo?.fullName) score += 10; else missing.push("الاسم الكامل");
+    if (profile.personalInfo?.phone) score += 10; else missing.push("رقم الجوال");
+    if (profile.education?.length > 0) score += 25; else missing.push("المؤهل التعليمي");
+    if (profile.jobInterests?.titles?.length > 0) score += 15; else missing.push("المسميات المستهدفة");
+    return { percentage: Math.min(score + 40, 100), missing };
   }, [profile]);
 
   const handleAuth = async () => {
@@ -70,7 +65,7 @@ const App: React.FC = () => {
       else if (!user.profile.personalInfo.fullName) setStep(AppStep.ONBOARDING);
       else setStep(AppStep.DASHBOARD);
     } catch (e: any) {
-      setError(e.message || "حدث خطأ غير متوقع");
+      setError(e.message || "حدث خطأ في المصادقة");
     } finally {
       setLoading(false);
     }
