@@ -86,14 +86,20 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   };
 
   const addExperience = () => {
+<<<<<<< HEAD
     // Fixed: Added missing isCurrent property to satisfy ExperienceEntry interface.
+=======
+>>>>>>> 2042397f0cf318a231e2c40e259621aef3b801af
     const newExp: ExperienceEntry = {
       id: Date.now().toString(),
       lastTitle: '',
       company: '',
       periodFrom: '',
       periodTo: '',
+<<<<<<< HEAD
       isCurrent: false,
+=======
+>>>>>>> 2042397f0cf318a231e2c40e259621aef3b801af
       tasks: ''
     };
     setFormData({
@@ -271,8 +277,12 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               <button 
                 onClick={() => {
                   const hasExp = !formData.experience.hasExperience;
+<<<<<<< HEAD
                   // Fixed: Added missing isCurrent property to satisfy ExperienceEntry interface.
                   setFormData({...formData, experience: {...formData.experience, hasExperience: hasExp, list: hasExp ? [{id: '1', lastTitle: '', company: '', periodFrom: '', periodTo: '', isCurrent: false, tasks: ''}] : []}});
+=======
+                  setFormData({...formData, experience: {...formData.experience, hasExperience: hasExp, list: hasExp ? [{id: '1', lastTitle: '', company: '', periodFrom: '', periodTo: '', tasks: ''}] : []}});
+>>>>>>> 2042397f0cf318a231e2c40e259621aef3b801af
                 }}
                 className={`w-12 h-6 rounded-full transition-colors relative ${formData.experience.hasExperience ? 'bg-blue-600' : 'bg-slate-300'}`}
               >
