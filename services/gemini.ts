@@ -5,27 +5,27 @@ import { UserProfile, InterviewQuestion, InterviewFeedback } from "../types";
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 function cleanJSONResponse(text: string): string {
-  // إزالة وسوم markdown أو أي نصوص زائدة قبل وبعد الـ JSON
-  let cleaned = text.trim();
-  if (cleaned.includes('```json')) {
-    cleaned = cleaned.split('```json')[1].split('```')[0].trim();
-  } else if (cleaned.includes('```')) {
-    cleaned = cleaned.split('```')[1].split('```')[0].trim();
+  if (!text) return "";
+  // البحث عن محتوى بين علامات الكود ```json أو ```
+  const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (jsonMatch && jsonMatch[1]) {
+    return jsonMatch[1].trim();
   }
-  return cleaned;
+  // إذا لم توجد علامات الكود، نحاول تنظيف النص من أي زوائد
+  return text.trim();
 }
 
 export async function searchRealJobs(interests: string[]): Promise<{title: string, company: string, location: string, platform: string, url: string, daysAgo: number}[]> {
-  const query = `ابحث عن وظائف حقيقية ومباشرة في السعودية للمسميات: ${interests.join(' و ')}.
-  لكل وظيفة تجدها، قدم الإجابة بالتنسيق التالي حصراً:
-  [المسمى] | [الشركة] | [المدينة] | [الرابط] | [عدد الأيام]`;
+  const query = `ابحث الآن عن أحدث 5 وظائف حقيقية في السعودية للمسميات: ${interests.join(', ')}. 
+  يجب أن يكون الرد بتنسيق نصي بسيط كالتالي:
+  المسمى | الشركة | المدينة | الرابط | منذ كم يوم`;
 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: query,
       config: {
-        systemInstruction: "أنت محرك بحث وظيفي متخصص في سوق العمل السعودي.",
+        systemInstruction: "أنت محرك بحث وظيفي خبير. ابحث عن روابط حقيقية ومباشرة.",
         tools: [{ googleSearch: {} }],
       },
     });
@@ -38,11 +38,11 @@ export async function searchRealJobs(interests: string[]): Promise<{title: strin
       const parts = line.split('|').map(p => p.trim());
       if (parts.length >= 2) {
         results.push({
-          title: parts[0].replace(/[\[\]]/g, ''),
+          title: parts[0].replace(/[\[\]\-\*]/g, ''),
           company: parts[1],
-          location: parts[2] || "السعودية",
-          platform: "بوابة التوظيف",
-          url: parts[3] || "#",
+          location: parts[2] || "المملكة العربية السعودية",
+          platform: "بوابة توظيف",
+          url: parts[3]?.startsWith('http') ? parts[3] : "https://www.google.com/search?q=" + encodeURIComponent(parts[0] + " " + parts[1]),
           daysAgo: parseInt(parts[4]) || 0
         });
       }
@@ -55,8 +55,7 @@ export async function searchRealJobs(interests: string[]): Promise<{title: strin
 }
 
 export async function generateInterviewQuestions(jobTitle: string, difficulty: string): Promise<InterviewQuestion[]> {
-  const prompt = `أنت مدير توظيف محترف. قم بتوليد 5 أسئلة مقابلة لوظيفة "${jobTitle}" بصعوبة "${difficulty}" باللغة العربية.
-  يجب أن يكون الرد بتنسيق JSON حصراً كصفوف داخل مصفوفة تحتوي على: id, type, question.`;
+  const prompt = `أنت مدير توظيف خبير. ولد 5 أسئلة مقابلة لوظيفة "${jobTitle}" بمستوى "${difficulty}" باللغة العربية. الرد يجب أن يكون JSON فقط.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -78,16 +77,16 @@ export async function generateInterviewQuestions(jobTitle: string, difficulty: s
         }
       }
     });
-    return JSON.parse(cleanJSONResponse(response.text || "[]"));
+    const cleaned = cleanJSONResponse(response.text);
+    return JSON.parse(cleaned);
   } catch (e) {
-    console.error("AI Question Gen Error:", e);
-    throw new Error("فشل توليد الأسئلة.");
+    console.error("AI Gen Questions Error:", e);
+    throw new Error("فشل في توليد الأسئلة");
   }
 }
 
 export async function analyzeInterview(answers: string[], jobTitle: string): Promise<InterviewFeedback> {
-  const prompt = `حلل إجابات مقابلة لوظيفة ${jobTitle}. الإجابات: ${answers.join(" | ")}.
-  قدم التقييم بالعربية كـ JSON يتضمن: fluency (0-100), confidence, technicalRating, generalAdvice.`;
+  const prompt = `حلل هذه الإجابات لمقابلة ${jobTitle}: ${answers.join(" | ")}. قدم تقييماً بالعربية كـ JSON.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -107,17 +106,14 @@ export async function analyzeInterview(answers: string[], jobTitle: string): Pro
         }
       }
     });
-    return JSON.parse(cleanJSONResponse(response.text || "{}"));
+    return JSON.parse(cleanJSONResponse(response.text));
   } catch (e) {
-    console.error("Interview Analysis Error:", e);
-    throw new Error("فشل تحليل المقابلة.");
+    throw new Error("فشل تحليل المقابلة");
   }
 }
 
 export async function enhanceCVContent(profile: UserProfile): Promise<string> {
-  const prompt = `أنت خبير سيرة ذاتية. بناءً على هذا الملف: ${JSON.stringify(profile)}, 
-  قم بصياغة ملخص احترافي وتحسين مهام الخبرات لتكون متوافقة مع أنظمة ATS باللغة العربية.
-  الناتج يجب أن يكون نص Markdown مرتب وجميل.`;
+  const prompt = `بناءً على هذا الملف الشخصي: ${JSON.stringify(profile)}، صغ ملخصاً مهنياً وحسن الخبرات لتكون ATS-Friendly باللغة العربية.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -126,16 +122,12 @@ export async function enhanceCVContent(profile: UserProfile): Promise<string> {
     });
     return response.text;
   } catch (e) {
-    console.error("CV Enhance Error:", e);
-    throw new Error("حدث خطأ في تحسين السيرة الذاتية.");
+    throw new Error("حدث خطأ أثناء تحسين السيرة");
   }
 }
 
 export async function tailorJobApplication(profile: UserProfile, jobTitle: string, company: string): Promise<{coverLetter: string, keyPoints: string[]}> {
-  const prompt = `بناءً على ملف المرشح التالي: ${JSON.stringify(profile)}
-  قم بصياغة خطاب تغطية (Cover Letter) احترافي وباللغة العربية لوظيفة "${jobTitle}" في شركة "${company}".
-  أيضاً، اذكر 3 نقاط قوة تجعل هذا المرشح مناسباً لهذه الوظيفة.
-  يجب أن تكون الإجابة بتنسيق JSON حصراً.`;
+  const prompt = `اكتب خطاب تغطية (Cover Letter) مخصص لشركة ${company} لوظيفة ${jobTitle} بناءً على هذا الملف: ${JSON.stringify(profile)}. الرد JSON.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -153,7 +145,7 @@ export async function tailorJobApplication(profile: UserProfile, jobTitle: strin
         }
       }
     });
-    return JSON.parse(cleanJSONResponse(response.text || "{}"));
+    return JSON.parse(cleanJSONResponse(response.text));
   } catch (e) {
     return { coverLetter: "خطأ في التوليد", keyPoints: [] };
   }
