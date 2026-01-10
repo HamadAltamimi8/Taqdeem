@@ -1,15 +1,13 @@
 
-import React, { useState } from 'react';
-import { UserProfile, Certification, ExperienceEntry, EducationEntry } from '../types';
+import React, { useState, useRef } from 'react';
+import { UserProfile, Certification, ExperienceEntry, EducationEntry } from './types';
 import { 
   INITIAL_PROFILE, 
   DEGREES, 
   ENGLISH_LEVELS, 
   NATIONALITIES, 
-  START_DATES, 
-  COMMON_SKILLS, 
-  COMMON_JOB_TITLES
-} from '../constants';
+  START_DATES
+} from './constants';
 
 interface OnboardingProps {
   onComplete: (data: UserProfile) => void;
@@ -22,19 +20,22 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [certFileAttached, setCertFileAttached] = useState(false);
   const [customJobTitle, setCustomJobTitle] = useState('');
   const [customSkill, setCustomSkill] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const totalSteps = 7;
 
   const handleNext = () => {
-    // التحقق من الخطوة 1: الاسم والبيانات الأساسية
     if (currentStep === 1) {
       if (!formData.personalInfo.fullName || !formData.personalInfo.phone) {
         alert("يرجى إكمال الاسم ورقم الجوال");
         return;
       }
+      if (formData.personalInfo.phone.length < 9) {
+        alert("يرجى إدخال رقم جوال صحيح يبدأ بـ 5");
+        return;
+      }
     }
 
-    // التحقق من الخطوة 2: إجبار إرفاق وثيقة التخرج
     if (currentStep === 2) {
       const hasUnattached = formData.education.some(edu => !edu.documentAttached);
       if (hasUnattached) {
@@ -43,18 +44,33 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       }
     }
 
-    // التحقق من الخطوة 5: الشهادات الاحترافية (إذا كان قد بدأ في إضافة واحدة)
-    if (currentStep === 5 && newCert.name && !certFileAttached) {
-       alert("يرجى إرفاق صورة الشهادة أو مسح الحقول");
-       return;
-    }
-
     if (currentStep < totalSteps) setCurrentStep(c => c + 1);
     else onComplete(formData);
   };
 
   const handleBack = () => {
     if (currentStep > 1) setCurrentStep(c => c - 1);
+  };
+
+  const handleFileUpload = (eduId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({
+          ...formData,
+          education: formData.education.map(edu => 
+            edu.id === eduId ? { 
+              ...edu, 
+              documentAttached: true, 
+              documentUrl: reader.result as string,
+              documentName: file.name 
+            } : edu
+          )
+        });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const addEducation = () => {
@@ -76,30 +92,14 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     });
   };
 
-  const removeEducation = (id: string) => {
-    if (formData.education.length > 1) {
-      setFormData({
-        ...formData,
-        education: formData.education.filter(edu => edu.id !== id)
-      });
-    }
-  };
-
   const addExperience = () => {
-<<<<<<< HEAD
-    // Fixed: Added missing isCurrent property to satisfy ExperienceEntry interface.
-=======
->>>>>>> 2042397f0cf318a231e2c40e259621aef3b801af
     const newExp: ExperienceEntry = {
       id: Date.now().toString(),
       lastTitle: '',
       company: '',
       periodFrom: '',
       periodTo: '',
-<<<<<<< HEAD
       isCurrent: false,
-=======
->>>>>>> 2042397f0cf318a231e2c40e259621aef3b801af
       tasks: ''
     };
     setFormData({
@@ -111,22 +111,12 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     });
   };
 
-  const updateExperience = (id: string, field: keyof ExperienceEntry, value: string) => {
+  const updateExperience = (id: string, field: keyof ExperienceEntry, value: any) => {
     setFormData({
       ...formData,
       experience: {
         ...formData.experience,
         list: formData.experience.list.map(exp => exp.id === id ? { ...exp, [field]: value } : exp)
-      }
-    });
-  };
-
-  const removeExperience = (id: string) => {
-    setFormData({
-      ...formData,
-      experience: {
-        ...formData.experience,
-        list: formData.experience.list.filter(exp => exp.id !== id)
       }
     });
   };
@@ -143,16 +133,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       });
       setCustomSkill('');
     }
-  };
-
-  const removeSkill = (skill: string) => {
-    setFormData({
-      ...formData,
-      skills: {
-        ...formData.skills,
-        technical: formData.skills.technical.filter(s => s !== skill)
-      }
-    });
   };
 
   const handleAddCustomJob = () => {
@@ -197,19 +177,54 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           <section className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-300">
             <h3 className="text-lg font-bold text-slate-700 border-r-4 border-blue-600 pr-3">المعلومات الأساسية</h3>
             <div className="grid grid-cols-1 gap-4">
-              <input type="text" placeholder="الاسم الكامل" value={formData.personalInfo.fullName} onChange={e => setFormData({ ...formData, personalInfo: { ...formData.personalInfo, fullName: e.target.value } })} className="w-full p-4 rounded-2xl border-2 border-slate-100 focus:border-blue-500 outline-none" />
-              <div className="flex gap-2">
-                <select value={formData.personalInfo.gender} onChange={e => setFormData({ ...formData, personalInfo: { ...formData.personalInfo, gender: e.target.value as any } })} className="w-1/3 p-4 rounded-2xl border-2 border-slate-100 outline-none font-bold">
-                  <option value="ذكر">ذكر</option>
-                  <option value="أنثى">أنثى</option>
-                </select>
-                <input type="date" value={formData.personalInfo.birthDate} onChange={e => setFormData({ ...formData, personalInfo: { ...formData.personalInfo, birthDate: e.target.value } })} className="w-2/3 p-4 rounded-2xl border-2 border-slate-100 outline-none text-xs" />
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500">الاسم الكامل</label>
+                <input type="text" placeholder="الاسم كما في الهوية" value={formData.personalInfo.fullName} onChange={e => setFormData({ ...formData, personalInfo: { ...formData.personalInfo, fullName: e.target.value } })} className="w-full p-4 rounded-2xl border-2 border-slate-100 focus:border-blue-500 outline-none" />
               </div>
-              <select value={formData.personalInfo.nationality} onChange={e => setFormData({ ...formData, personalInfo: { ...formData.personalInfo, nationality: e.target.value } })} className="w-full p-4 rounded-2xl border-2 border-slate-100 outline-none">
-                {NATIONALITIES.map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-              <input type="text" placeholder="المدينة الحالية" value={formData.personalInfo.city} onChange={e => setFormData({ ...formData, personalInfo: { ...formData.personalInfo, city: e.target.value } })} className="w-full p-4 rounded-2xl border-2 border-slate-100 outline-none" />
-              <input type="tel" placeholder="رقم الجوال" value={formData.personalInfo.phone} onChange={e => setFormData({ ...formData, personalInfo: { ...formData.personalInfo, phone: e.target.value } })} className="w-full p-4 rounded-2xl border-2 border-slate-100 outline-none text-left" dir="ltr" />
+              
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500">الجنس</label>
+                  <select value={formData.personalInfo.gender} onChange={e => setFormData({ ...formData, personalInfo: { ...formData.personalInfo, gender: e.target.value as any } })} className="w-full p-4 rounded-2xl border-2 border-slate-100 outline-none font-bold">
+                    <option value="ذكر">ذكر</option>
+                    <option value="أنثى">أنثى</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500">تاريخ الميلاد</label>
+                  <input type="date" value={formData.personalInfo.birthDate} onChange={e => setFormData({ ...formData, personalInfo: { ...formData.personalInfo, birthDate: e.target.value } })} className="w-full p-4 rounded-2xl border-2 border-slate-100 outline-none text-xs" />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500">الجنسية</label>
+                <select value={formData.personalInfo.nationality} onChange={e => setFormData({ ...formData, personalInfo: { ...formData.personalInfo, nationality: e.target.value } })} className="w-full p-4 rounded-2xl border-2 border-slate-100 outline-none">
+                  {NATIONALITIES.map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500">المدينة الحالية</label>
+                <input type="text" placeholder="مثلاً: الرياض" value={formData.personalInfo.city} onChange={e => setFormData({ ...formData, personalInfo: { ...formData.personalInfo, city: e.target.value } })} className="w-full p-4 rounded-2xl border-2 border-slate-100 outline-none" />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500">رقم الجوال (يبدأ بـ 5)</label>
+                <div className="flex items-center bg-white rounded-2xl border-2 border-slate-100 overflow-hidden focus-within:border-blue-500 transition-colors">
+                  <div className="bg-slate-50 px-4 py-4 border-l-2 border-slate-100 font-bold text-slate-400 text-sm" dir="ltr">+966</div>
+                  <input 
+                    type="tel" 
+                    placeholder="5XXXXXXXX" 
+                    value={formData.personalInfo.phone} 
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      if (val.length <= 9) setFormData({ ...formData, personalInfo: { ...formData.personalInfo, phone: val } });
+                    }} 
+                    className="flex-grow p-4 outline-none text-left font-bold tracking-widest" 
+                    dir="ltr" 
+                  />
+                </div>
+              </div>
             </div>
           </section>
         )}
@@ -222,11 +237,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               <div key={edu.id} className="p-5 bg-white rounded-3xl border-2 border-slate-100 space-y-4 relative animate-in slide-in-from-top-2">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full">المؤهل {index + 1}</span>
-                  {formData.education.length > 1 && (
-                    <button onClick={() => removeEducation(edu.id)} className="text-red-400 p-1 hover:bg-red-50 rounded-lg">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
-                  )}
                 </div>
                 
                 <select value={edu.degree} onChange={e => updateEducation(edu.id, 'degree', e.target.value)} className="w-full p-4 rounded-2xl border-2 border-slate-100 outline-none">
@@ -239,30 +249,34 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                    <label className="text-xs font-bold text-slate-500 mr-1 flex items-center">
                      إرفاق وثيقة التخرج <span className="text-red-500 mr-1">* إلزامي للمتابعة</span>
                    </label>
-                   <button 
-                    onClick={() => updateEducation(edu.id, 'documentAttached', true)} 
-                    className={`w-full p-4 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center transition-all ${edu.documentAttached ? 'bg-emerald-50 border-emerald-500 text-emerald-600 shadow-inner' : 'bg-slate-50 border-slate-200 text-slate-400'}`}
+                   <input 
+                    type="file" 
+                    accept="image/*,application/pdf" 
+                    className="hidden" 
+                    id={`file-${edu.id}`}
+                    onChange={(e) => handleFileUpload(edu.id, e)}
+                   />
+                   <label 
+                    htmlFor={`file-${edu.id}`}
+                    className={`w-full p-4 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all ${edu.documentAttached ? 'bg-emerald-50 border-emerald-500 text-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}
                    >
                     {edu.documentAttached ? (
                       <>
                         <svg className="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-                        <span className="text-xs font-black uppercase">تم التحميل بنجاح ✓</span>
+                        <span className="text-xs font-black truncate max-w-full px-4">{edu.documentName || 'تم الرفع بنجاح'}</span>
                       </>
                     ) : (
                       <>
-                        <svg className="w-8 h-8 mb-1 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                        <span className="text-xs font-bold tracking-tight">اضغط لرفع وثيقة التخرج (PDF/صورة)</span>
+                        <svg className="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        <span className="text-xs font-bold">اضغط لاختيار صورة أو ملف PDF</span>
                       </>
                     )}
-                   </button>
+                   </label>
                 </div>
               </div>
             ))}
 
-            <button 
-              onClick={addEducation}
-              className="w-full py-4 border-2 border-dashed border-blue-200 text-blue-600 rounded-2xl font-black text-sm flex items-center justify-center space-x-2 space-x-reverse hover:bg-blue-50 transition-all"
-            >
+            <button onClick={addEducation} className="w-full py-4 border-2 border-dashed border-blue-200 text-blue-600 rounded-2xl font-black text-sm flex items-center justify-center space-x-2 space-x-reverse hover:bg-blue-50 transition-all">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
               <span>إضافة مؤهل تعليمي آخر</span>
             </button>
@@ -277,12 +291,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               <button 
                 onClick={() => {
                   const hasExp = !formData.experience.hasExperience;
-<<<<<<< HEAD
-                  // Fixed: Added missing isCurrent property to satisfy ExperienceEntry interface.
                   setFormData({...formData, experience: {...formData.experience, hasExperience: hasExp, list: hasExp ? [{id: '1', lastTitle: '', company: '', periodFrom: '', periodTo: '', isCurrent: false, tasks: ''}] : []}});
-=======
-                  setFormData({...formData, experience: {...formData.experience, hasExperience: hasExp, list: hasExp ? [{id: '1', lastTitle: '', company: '', periodFrom: '', periodTo: '', tasks: ''}] : []}});
->>>>>>> 2042397f0cf318a231e2c40e259621aef3b801af
                 }}
                 className={`w-12 h-6 rounded-full transition-colors relative ${formData.experience.hasExperience ? 'bg-blue-600' : 'bg-slate-300'}`}
               >
@@ -294,28 +303,40 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               <div className="space-y-6">
                 {formData.experience.list.map((exp, index) => (
                   <div key={exp.id} className="p-5 bg-white rounded-3xl border-2 border-slate-50 shadow-sm space-y-4 relative animate-in slide-in-from-top-2">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full">الخبرة {index + 1}</span>
-                      {formData.experience.list.length > 1 && (
-                        <button onClick={() => removeExperience(exp.id)} className="text-red-400 p-1 hover:bg-red-50 rounded-lg">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                      )}
-                    </div>
                     <input type="text" placeholder="المسمى الوظيفي" value={exp.lastTitle} onChange={e => updateExperience(exp.id, 'lastTitle', e.target.value)} className="w-full p-4 rounded-2xl border-2 border-slate-100 outline-none" />
                     <input type="text" placeholder="اسم الشركة" value={exp.company} onChange={e => updateExperience(exp.id, 'company', e.target.value)} className="w-full p-4 rounded-2xl border-2 border-slate-100 outline-none" />
+                    
+                    <div className="flex items-center space-x-2 space-x-reverse mb-2 mr-1">
+                      <input 
+                        type="checkbox" 
+                        id={`current-${exp.id}`}
+                        checked={exp.isCurrent}
+                        onChange={(e) => updateExperience(exp.id, 'isCurrent', e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor={`current-${exp.id}`} className="text-xs font-bold text-slate-600">أعمل هنا حالياً (حتى الآن)</label>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-2">
-                      <input type="date" value={exp.periodFrom} onChange={e => updateExperience(exp.id, 'periodFrom', e.target.value)} className="w-full p-3 rounded-2xl border-2 border-slate-100 outline-none text-xs" />
-                      <input type="date" value={exp.periodTo} onChange={e => updateExperience(exp.id, 'periodTo', e.target.value)} className="w-full p-3 rounded-2xl border-2 border-slate-100 outline-none text-xs" />
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400 mr-1">تاريخ البداية</label>
+                        <input type="date" value={exp.periodFrom} onChange={e => updateExperience(exp.id, 'periodFrom', e.target.value)} className="w-full p-3 rounded-2xl border-2 border-slate-100 outline-none text-xs" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400 mr-1">تاريخ الانتهاء</label>
+                        <input 
+                          type="date" 
+                          value={exp.periodTo} 
+                          disabled={exp.isCurrent}
+                          onChange={e => updateExperience(exp.id, 'periodTo', e.target.value)} 
+                          className={`w-full p-3 rounded-2xl border-2 border-slate-100 outline-none text-xs ${exp.isCurrent ? 'bg-slate-50 text-slate-300 opacity-50' : ''}`} 
+                        />
+                      </div>
                     </div>
                     <textarea placeholder="المهام الرئيسية..." value={exp.tasks} onChange={e => updateExperience(exp.id, 'tasks', e.target.value)} className="w-full p-4 rounded-2xl border-2 border-slate-100 outline-none h-24 text-sm" />
                   </div>
                 ))}
-                
-                <button 
-                  onClick={addExperience}
-                  className="w-full py-4 border-2 border-dashed border-blue-200 text-blue-600 rounded-2xl font-black text-sm flex items-center justify-center space-x-2 space-x-reverse hover:bg-blue-50 transition-all"
-                >
+                <button onClick={addExperience} className="w-full py-4 border-2 border-dashed border-blue-200 text-blue-600 rounded-2xl font-black text-sm flex items-center justify-center space-x-2 space-x-reverse hover:bg-blue-50 transition-all">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
                   <span>إضافة خبرة أخرى</span>
                 </button>
@@ -330,15 +351,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             <div className="space-y-4">
               <div className="flex gap-2">
                 <input type="text" placeholder="اكتب مهارة واضغط إضافة..." value={customSkill} onChange={(e) => setCustomSkill(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addCustomSkill()} className="flex-grow p-4 rounded-2xl border-2 border-slate-100 outline-none" />
-                <button onClick={addCustomSkill} className="bg-blue-600 text-white w-14 rounded-2xl flex items-center justify-center shadow-lg hover:bg-blue-700 transition-all">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
-                </button>
+                <button onClick={addCustomSkill} className="bg-blue-600 text-white w-14 rounded-2xl flex items-center justify-center shadow-lg"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg></button>
               </div>
               <div className="flex flex-wrap gap-2 min-h-[50px] p-3 bg-slate-50 rounded-2xl border border-slate-100">
                 {formData.skills.technical.map(skill => (
                   <div key={skill} className="flex items-center bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs font-bold animate-in zoom-in-50">
                     <span>{skill}</span>
-                    <button onClick={() => removeSkill(skill)} className="mr-2 text-slate-400 hover:text-red-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                    <button onClick={() => setFormData({...formData, skills: {...formData.skills, technical: formData.skills.technical.filter(s => s !== skill)}})} className="mr-2 text-slate-400 hover:text-red-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                   </div>
                 ))}
               </div>
@@ -365,15 +384,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 <span className="text-xs font-bold">{certFileAttached ? 'تم إرفاق الشهادة ✓' : 'اضغط لرفع صورة الشهادة'}</span>
               </button>
               <button onClick={() => { if (newCert.name && certFileAttached) { setFormData({...formData, certifications: {hasCerts: true, list: [...formData.certifications.list, newCert]}}); setNewCert({name: '', issuer: '', date: ''}); setCertFileAttached(false); } else { alert("يرجى إكمال الاسم وإرفاق الملف"); } }} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-100">إضافة الشهادة لقائمة ملفي +</button>
-              
-              <div className="space-y-2 mt-4">
-                {formData.certifications.list.map((c, i) => (
-                   <div key={i} className="bg-white p-3 rounded-xl border border-blue-100 flex justify-between items-center text-xs">
-                      <span className="font-black text-blue-700">{c.name}</span>
-                      <span className="text-slate-400 font-bold">{c.issuer}</span>
-                   </div>
-                ))}
-              </div>
             </div>
           </section>
         )}
@@ -382,6 +392,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           <section className="space-y-6 animate-in fade-in duration-300">
             <h3 className="text-lg font-bold text-slate-700 border-r-4 border-blue-600 pr-3">الاهتمامات والجاهزية</h3>
             <div className="space-y-4">
+              <label className="text-xs font-bold text-slate-500 mr-1">المسميات الوظيفية المستهدفة (3 كحد أقصى)</label>
               <div className="flex gap-2">
                 <input type="text" placeholder="اكتب مسمى وظيفي..." value={customJobTitle} onChange={(e) => setCustomJobTitle(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleAddCustomJob()} className="flex-grow p-4 rounded-2xl border-2 border-slate-100 outline-none" />
                 <button onClick={handleAddCustomJob} className="bg-blue-600 text-white w-14 rounded-2xl flex items-center justify-center shadow-lg"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg></button>
@@ -401,7 +412,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               ))}
             </div>
             <div className="flex items-center justify-between p-4 bg-white rounded-2xl border-2 border-slate-100">
-              <span className="text-slate-700 font-bold">تصريح العمل</span>
+              <span className="text-slate-700 font-bold">تصريح العمل (ساري)</span>
               <button onClick={() => setFormData({...formData, readiness: {...formData.readiness, workPermit: !formData.readiness.workPermit}})} className={`w-12 h-6 rounded-full transition-colors relative ${formData.readiness.workPermit ? 'bg-emerald-500' : 'bg-slate-300'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.readiness.workPermit ? 'left-1' : 'left-7'}`}></div></button>
             </div>
           </section>
