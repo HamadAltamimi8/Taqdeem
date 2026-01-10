@@ -1,0 +1,10 @@
+
+{
+  "name": "Taqdeem - Smart Job Seeker Platform",
+  "description": "An AI-powered platform for job seekers featuring automated CV generation, virtual AI interviews, and job application tracking with an Arabic-first interface.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
