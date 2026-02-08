@@ -1,15 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-
-export const BannerAd: React.FC = () => (
-  <div className="w-full bg-slate-100 border-y border-slate-200 py-2 px-4 mb-4 flex items-center justify-between overflow-hidden">
-    <div className="flex items-center space-x-2 space-x-reverse">
-      <span className="bg-slate-300 text-[8px] font-black px-1.5 py-0.5 rounded text-white">إعلان</span>
-      <p className="text-[10px] text-slate-400 font-bold truncate">احصل على دورات تدريبية معتمدة بخصم 50%</p>
-    </div>
-    <button className="text-[10px] font-black text-blue-600 underline">مشاهدة</button>
-  </div>
-);
+import { dbService } from '../services/db';
+import { SponsoredAd } from '../types';
 
 interface RewardedAdModalProps {
   onReward: () => void;
@@ -17,52 +9,121 @@ interface RewardedAdModalProps {
   featureName: string;
 }
 
+// معرفات AdMob الخاصة بك
+const ADMOB_CONFIG = {
+  APP_ID: 'ca-app-pub-1670199048909611~8603840056',
+  INTERSTITIAL_UNIT_ID: 'ca-app-pub-1670199048909611/8304457152'
+};
+
 export const RewardedAdModal: React.FC<RewardedAdModalProps> = ({ onReward, onClose, featureName }) => {
   const [timer, setTimer] = useState(5);
-  const [isFinished, setIsFinished] = useState(false);
+  const [canClose, setCanClose] = useState(false);
+  const [ad, setAd] = useState<any>(null);
 
   useEffect(() => {
-    if (timer > 0) {
-      const interval = setInterval(() => setTimer(t => t - 1), 1000);
-      return () => clearInterval(interval);
-    } else {
-      setIsFinished(true);
-    }
-  }, [timer]);
+    // جلب إعلان من قاعدة البيانات أو استخدام إعلان افتراضي احترافي
+    const savedAds = dbService.getAds().filter(a => a.isActive);
+    const selectedAd = savedAds.length > 0 
+      ? savedAds[Math.floor(Math.random() * savedAds.length)] 
+      : {
+          id: 'admob_placeholder',
+          title: 'تحميل تطبيق "تقديم" للمحترفين',
+          imageUrl: 'https://images.unsplash.com/photo-1551288560-12948195159b?w=800&q=80',
+          targetUrl: 'https://google.com',
+          pricePerView: 0.15
+        };
+    
+    setAd(selectedAd);
+    if (selectedAd.id) dbService.trackAdView(selectedAd.id);
+
+    // عد تنازلي لإظهار زر الإغلاق (5 ثوانٍ لضمان الربح)
+    const interval = setInterval(() => {
+      setTimer(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setCanClose(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleAction = () => {
+    if (ad && ad.id) dbService.trackAdClick(ad.id);
+    window.open(ad.targetUrl || 'https://google.com', '_blank');
+  };
+
+  if (!ad) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/95 backdrop-blur-md p-6">
-      <div className="bg-white w-full max-w-sm rounded-[40px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-        <div className="bg-gradient-to-br from-amber-400 to-orange-500 p-8 text-center text-white">
-          <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM5.884 6.68a1 1 0 10-1.414-1.414l.707-.707a1 1 0 101.414 1.414l-.707.707zm8.232 0a1 1 0 101.414-1.414l-.707-.707a1 1 0 10-1.414 1.414l.707.707zM9 11a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zM11 13a1 1 0 10-2 0v.01a1 1 0 102 0V13zM10 16a1 1 0 100-2 1 1 0 000 2z"/></svg>
-          </div>
-          <h3 className="text-xl font-black mb-1">افتح الميزة مجاناً! ⚡</h3>
-          <p className="text-xs opacity-90 font-bold">شاهد إعلان قصير لاستخدام {featureName}</p>
-        </div>
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black font-['Cairo'] animate-in fade-in duration-500" dir="rtl">
+      {/* خلفية غامضة بأسلوب الألعاب */}
+      <div className="absolute inset-0 bg-slate-950">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(37,99,235,0.2),transparent_70%)] animate-pulse"></div>
+        <img src={ad.imageUrl} className="w-full h-full object-cover opacity-20 blur-xl scale-110" alt="" />
+      </div>
+
+      <div className="relative w-full max-w-lg h-full md:h-[95vh] bg-slate-900 md:rounded-[48px] overflow-hidden flex flex-col shadow-[0_0_120px_rgba(0,0,0,1)] border border-white/5">
         
-        <div className="p-8 space-y-6 text-center">
-          <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
-            <svg className="absolute inset-0 w-full h-full -rotate-90">
-              <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100" />
-              <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={251} strokeDashoffset={251 - (251 * (5 - timer) / 5)} className="text-amber-500 transition-all duration-1000" />
-            </svg>
-            <span className="text-3xl font-black text-slate-800">{timer > 0 ? timer : '✓'}</span>
+        {/* شريط الإغلاق العلوي */}
+        <div className="absolute top-8 right-8 left-8 z-50 flex justify-between items-center">
+          <div className="bg-black/60 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-2xl flex items-center gap-2">
+             <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+             <span className="text-white text-[9px] font-black uppercase tracking-widest opacity-80">Interstitial Ad Unit</span>
           </div>
 
-          {!isFinished ? (
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <p className="text-[10px] text-slate-400 font-bold">جاري تحميل الإعلان...</p>
+          {!canClose ? (
+            <div className="bg-white text-slate-900 w-12 h-12 rounded-full flex items-center justify-center font-black text-sm shadow-2xl ring-4 ring-white/10 transition-transform animate-in zoom-in">
+              {timer}
             </div>
           ) : (
-            <div className="space-y-3">
-              <button onClick={onReward} className="w-full bg-emerald-500 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-emerald-100 animate-in fade-in slide-in-from-bottom-2">
-                الحصول على الرصيد والبدء
-              </button>
-              <button onClick={onClose} className="text-slate-400 text-[10px] font-bold">إغلاق وتجاهل</button>
-            </div>
+            <button 
+              onClick={onReward}
+              className="bg-white hover:bg-slate-200 text-slate-900 p-3.5 rounded-full shadow-2xl transition-all active:scale-90 border-4 border-white/20"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth="4" strokeLinecap="round"/></svg>
+            </button>
           )}
         </div>
+
+        {/* جسم الإعلان الرئيسي */}
+        <div className="flex-grow relative flex items-center justify-center p-6" onClick={handleAction}>
+          <div className="w-full h-full rounded-[40px] overflow-hidden shadow-2xl border border-white/10 relative group cursor-pointer">
+            <img src={ad.imageUrl} className="w-full h-full object-cover transition-transform duration-[20s] group-hover:scale-125" alt="Ad Content" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/20"></div>
+            
+            {/* تفاصيل العرض */}
+            <div className="absolute bottom-10 right-8 left-8 text-right space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-white rounded-2xl p-1 shadow-2xl shrink-0">
+                  <img src={ad.imageUrl} className="w-full h-full object-cover rounded-xl" alt="Icon" />
+                </div>
+                <div className="flex-grow">
+                  <h4 className="text-white font-black text-2xl drop-shadow-2xl">{ad.title}</h4>
+                  <p className="text-white/60 text-[10px] font-bold mt-1">تطبيق موثوق • Google AdMob Verified</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* زر التفاعل السفلي */}
+        <div className="p-8 pb-10 bg-slate-950 border-t border-white/5">
+          <button 
+            onClick={handleAction}
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white py-6 rounded-[32px] font-black text-xl shadow-[0_20px_40px_rgba(37,99,235,0.4)] flex items-center justify-center gap-3 active:scale-[0.98] transition-all group"
+          >
+            <span>استكشاف العرض الآن</span>
+            <svg className="w-6 h-6 group-hover:translate-x-[-8px] transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 7l5 5m0 0l-5 5m5-5H6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          <div className="mt-6 flex justify-center opacity-20">
+            <p className="text-[8px] text-white font-black uppercase tracking-[0.4em]">Ad Unit: {ADMOB_CONFIG.INTERSTITIAL_UNIT_ID}</p>
+          </div>
+        </div>
+
       </div>
     </div>
   );

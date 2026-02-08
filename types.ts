@@ -2,45 +2,62 @@
 export interface UserAccount {
   id: string;
   email: string;
-  password?: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'recruiter' | 'admin';
   createdAt: string;
   profile: UserProfile;
+  recruiterProfile?: RecruiterProfile;
+  accessToken?: string;
+}
+
+export interface SponsoredAd {
+  id: string;
+  title: string;
+  imageUrl: string;
+  targetUrl: string;
+  views: number;
+  clicks: number;
+  pricePerView: number;
+  isActive: boolean;
+}
+
+export interface RecruiterProfile {
+  companyName: string;
+  responsibleName: string;
+  phone: string;
+  jobTitle: string;
+  email: string;
+}
+
+export interface JobPost {
+  id: string;
+  recruiterId: string;
+  companyName: string;
+  title: string;
+  qualification: string;
+  englishLevel: string;
+  vacancies: number;
+  city: string;
+  majors: string[];
+  jobType: 'دوام كامل' | 'دوام جزئي' | 'عن بعد';
+  description: string;
+  externalLink?: string;
+  createdAt: string;
+  applicantsCount?: number;
+}
+
+export interface Application {
+  id: string;
+  jobId: string;
+  userId: string;
+  appliedAt: string;
+  userProfile: UserProfile;
 }
 
 export interface Certification {
   name: string;
   issuer: string;
   date: string;
-  expiry?: string;
   image?: string;
-}
-
-export interface ExperienceEntry {
-  id: string;
-  lastTitle: string;
-  company: string;
-  periodFrom: string;
-  periodTo: string;
-  isCurrent: boolean;
-  tasks: string;
-}
-
-export interface EducationEntry {
-  id: string;
-  degree: string;
-  major: string;
-  university: string;
-  gradYear: string;
-  documentAttached: boolean;
-  documentUrl?: string;
-  documentName?: string;
-}
-
-export interface UserActivity {
-  appliedJobs: { title: string; company: string; date: string }[];
-  interviews: { jobTitle: string; fluency: number; date: string }[];
-  credits: number;
 }
 
 export interface UserProfile {
@@ -52,7 +69,6 @@ export interface UserProfile {
     city: string;
     email: string;
     phone: string;
-    avatar?: string;
   };
   education: EducationEntry[];
   experience: {
@@ -75,17 +91,42 @@ export interface UserProfile {
     jobType: string;
     workStyle: string;
   };
-  readiness: {
-    available: boolean;
-    startDate: string;
-    workPermit: boolean;
+  activity: {
+    appliedJobs: any[];
+    interviews: any[];
+    credits: number;
   };
   links: {
     linkedin: string;
     github: string;
     portfolio: string;
   };
-  activity: UserActivity;
+  readiness: {
+    available: boolean;
+    startDate: string;
+    workPermit: boolean;
+  };
+}
+
+export interface EducationEntry {
+  id: string;
+  degree: string;
+  major: string;
+  university: string;
+  gradYear: string;
+  documentAttached: boolean;
+  documentUrl?: string;
+  documentName?: string;
+}
+
+export interface ExperienceEntry {
+  id: string;
+  lastTitle: string;
+  company: string;
+  periodFrom: string;
+  periodTo: string;
+  isCurrent: boolean;
+  tasks: string;
 }
 
 export enum AppStep {
@@ -96,8 +137,8 @@ export enum AppStep {
   INTERVIEW,
   CV_BUILDER,
   JOBS,
-  PROFILE,
-  ADMIN_PANEL
+  ADMIN_PANEL,
+  RECRUITER_DASHBOARD
 }
 
 export interface InterviewQuestion {

@@ -2,8 +2,7 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
 import { enhanceCVContent } from '../services/gemini';
-import { dbService } from '../services/db';
-import { RewardedAdModal, BannerAd } from './AdComponents';
+import { RewardedAdModal } from './AdComponents';
 
 interface CVBuilderProps {
   profile: UserProfile;
@@ -16,31 +15,17 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ profile, onBack, updateProfile })
   const [enhancedText, setEnhancedText] = useState('');
   const [showAd, setShowAd] = useState(false);
 
-  const credits = profile.activity?.credits ?? 0;
-
   const startEnhancement = () => {
-    if (credits <= 0) {
-      setShowAd(true);
-    } else {
-      processAI();
-    }
+    // الإعلان أصبح إجبارياً الآن للجميع
+    setShowAd(true);
   };
 
-  const processAI = async (isBonus = false) => {
+  const processAI = async () => {
     setIsEnhancing(true);
     setShowAd(false);
     try {
       const res = await enhanceCVContent(profile);
       setEnhancedText(res);
-      
-      // خصم رصيد إذا لم تكن عملية مكافأة
-      if (!isBonus) {
-        const newProfile = {
-          ...profile,
-          activity: { ...profile.activity, credits: Math.max(0, credits - 1) }
-        };
-        updateProfile(newProfile);
-      }
     } catch (e) {
       alert("حدث خطأ أثناء تحسين المحتوى.");
     } finally {
@@ -49,50 +34,59 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ profile, onBack, updateProfile })
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 text-right font-['Cairo']" dir="rtl">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-slate-800">السيرة الذاتية الذكية</h2>
-        <div className="flex items-center bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-100">
-           <span className="text-amber-600 text-[10px] font-black ml-1">⚡ رصيد: {credits}</span>
-        </div>
+        <h2 className="text-2xl font-black text-slate-800">السيرة الذاتية الذكية</h2>
       </div>
 
-      <BannerAd />
-
-      <div className="bg-white p-6 rounded-2xl border-2 border-dashed border-slate-200 text-center space-y-4">
-        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto">
-          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+      <div className="bg-white p-8 rounded-[40px] border-2 border-dashed border-slate-100 text-center space-y-6 shadow-sm">
+        <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
+          <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeWidth="2.5" /></svg>
         </div>
-        <h3 className="font-bold text-slate-800">سيرتك الذاتية جاهزة تقريباً</h3>
-        <p className="text-sm text-slate-500">تم تجميع بياناتك تلقائياً من الملف الشخصي.</p>
+        <div>
+          <h3 className="font-black text-slate-800 text-lg">سيرتك الذاتية جاهزة تقريباً</h3>
+          <p className="text-xs text-slate-400 font-bold mt-2 leading-relaxed">سنقوم بإعادة صياغة خبراتك ومهاراتك لتكون أكثر احترافية وجاذبية لمدراء التوظيف.</p>
+        </div>
+        
         <button 
           onClick={startEnhancement}
           disabled={isEnhancing}
-          className="w-full bg-blue-600 text-white px-6 py-4 rounded-2xl font-black shadow-xl shadow-blue-100 hover:bg-blue-700 transition-colors disabled:opacity-50"
+          className="w-full bg-blue-600 text-white px-6 py-5 rounded-[28px] font-black shadow-xl shadow-blue-100 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
         >
-          {isEnhancing ? 'جاري التحسين...' : 'تحسين بالذكاء الاصطناعي (1 ⚡)'}
+          {isEnhancing ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>جاري التحسين الذكي...</span>
+            </>
+          ) : (
+            <>
+              <span>تحسين بالذكاء الاصطناعي ✨</span>
+            </>
+          )}
         </button>
       </div>
 
       {enhancedText && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 animate-in fade-in duration-500">
-          <h4 className="font-bold text-slate-800">معاينة المحتوى المحسن</h4>
-          <div className="text-sm text-slate-600 prose prose-slate bg-slate-50 p-4 rounded-xl max-h-60 overflow-y-auto">
-            {enhancedText.split('\n').map((line, i) => (
-              <p key={i} className="mb-2">{line}</p>
-            ))}
+        <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-md space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-500">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-6 bg-blue-600 rounded-full"></div>
+            <h4 className="font-black text-slate-800">المحتوى المُحسن والمقترح</h4>
           </div>
-          <div className="flex space-x-2 space-x-reverse pt-4">
-            <button className="flex-grow bg-blue-600 text-white py-3 rounded-xl font-bold">تحميل PDF</button>
+          <div className="text-sm text-slate-600 leading-relaxed font-bold bg-slate-50/50 p-6 rounded-[32px] border border-slate-100 max-h-80 overflow-y-auto whitespace-pre-wrap">
+            {enhancedText}
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button className="flex-grow bg-slate-900 text-white py-4 rounded-2xl font-black text-xs active:scale-95 transition-all">نسخ المحتوى 📋</button>
+            <button className="flex-grow bg-blue-600 text-white py-4 rounded-2xl font-black text-xs active:scale-95 transition-all">تحميل PDF 📄</button>
           </div>
         </div>
       )}
 
       {showAd && (
         <RewardedAdModal 
-          featureName="تحسين السيرة الذاتية"
+          featureName="خدمة تحسين السيرة"
           onClose={() => setShowAd(false)}
-          onReward={() => processAI(true)}
+          onReward={processAI}
         />
       )}
     </div>
